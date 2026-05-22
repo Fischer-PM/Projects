@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.env
+portfolio/research-reports/
+portfolio/interview-prep/
+portfolio/generated-adrs/
+portfolio/digests/
