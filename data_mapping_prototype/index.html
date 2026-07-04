@@ -1,0 +1,1087 @@
+<title>commerce.order_event — Schema Onboarding</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#eef0ee;
+    --surface:#ffffff;
+    --surface-2:#e3e7e2;
+    --ink:#161b1a;
+    --muted:#5c645f;
+    --line:#d3d8d2;
+    --accent:#b85e28;
+    --accent-ink:#ffffff;
+    --stream:#25867c;
+    --batch:#a1631f;
+    --good:#2b7d4f;
+    --good-bg:#e4f1e8;
+    --bad:#b23a30;
+    --bad-bg:#fbe9e6;
+    --warn:#93701c;
+    --warn-bg:#f5edd8;
+    --radius:3px;
+    --sans: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  :root[data-theme="dark"]{
+    --bg:#10151a;
+    --surface:#161d23;
+    --surface-2:#1c242b;
+    --ink:#e8ece8;
+    --muted:#8b968f;
+    --line:#2a343a;
+    --accent:#e08a4a;
+    --accent-ink:#161206;
+    --stream:#49b7ac;
+    --batch:#d99a4e;
+    --good:#4caf7d;
+    --good-bg:#173124;
+    --bad:#e0645a;
+    --bad-bg:#341e1c;
+    --warn:#d9ab52;
+    --warn-bg:#332813;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#10151a;
+      --surface:#161d23;
+      --surface-2:#1c242b;
+      --ink:#e8ece8;
+      --muted:#8b968f;
+      --line:#2a343a;
+      --accent:#e08a4a;
+      --accent-ink:#161206;
+      --stream:#49b7ac;
+      --batch:#d99a4e;
+      --good:#4caf7d;
+      --good-bg:#173124;
+      --bad:#e0645a;
+      --bad-bg:#341e1c;
+      --warn:#d9ab52;
+      --warn-bg:#332813;
+      color-scheme: dark;
+    }
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  code, .mono{font-family:var(--mono);}
+  h1,h2,h3{text-wrap:balance; margin:0;}
+  ::selection{background:color-mix(in srgb, var(--accent) 35%, transparent);}
+  button{font-family:inherit;}
+  a{color:var(--accent);}
+
+  .app{
+    max-width:1180px;
+    margin:0 auto;
+    padding:1.5rem 1.5rem 4rem;
+  }
+  .app.mode-stream{ --mode-color: var(--stream); }
+  .app.mode-batch{ --mode-color: var(--batch); }
+
+  /* ---------- topbar ---------- */
+  .topbar{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:1.5rem;
+    flex-wrap:wrap;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:1rem;
+    margin-bottom:1.75rem;
+  }
+  .brandblock{display:flex; align-items:center; gap:.75rem;}
+  .brandmark{
+    width:34px; height:34px;
+    border:1.5px solid var(--ink);
+    border-radius:var(--radius);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-weight:700; font-size:.85rem;
+    flex:none;
+  }
+  .titles .eyebrow{
+    font-family:var(--mono);
+    font-size:.68rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 .2rem;
+  }
+  .titles h1{
+    font-family:var(--mono);
+    font-size:1.5rem;
+    font-weight:700;
+    letter-spacing:-.01em;
+  }
+  .titles h1 .version{
+    color:var(--accent);
+    font-weight:600;
+  }
+  .titles .sub{
+    font-size:.85rem;
+    color:var(--muted);
+    margin-top:.3rem;
+    max-width:46ch;
+  }
+
+  .mode-toggle{
+    display:flex;
+    border:1.5px solid var(--ink);
+    border-radius:var(--radius);
+    overflow:hidden;
+    flex:none;
+  }
+  .mode-toggle button{
+    font-family:var(--mono);
+    font-size:.78rem;
+    font-weight:600;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    padding:.55rem 1rem;
+    border:none;
+    background:var(--surface);
+    color:var(--muted);
+    cursor:pointer;
+  }
+  .mode-toggle button + button{ border-left:1.5px solid var(--ink); }
+  .mode-toggle button[data-active="true"][data-mode="stream"]{ background:var(--stream); color:#fff; }
+  .mode-toggle button[data-active="true"][data-mode="batch"]{ background:var(--batch); color:#fff; }
+  .mode-toggle .dot{
+    display:inline-block; width:6px; height:6px; border-radius:50%;
+    background:currentColor; margin-right:.45rem; opacity:.85;
+  }
+
+  /* ---------- layout ---------- */
+  .body-grid{
+    display:grid;
+    grid-template-columns:200px 1fr;
+    gap:2rem;
+    align-items:start;
+  }
+  @media (max-width:760px){
+    .body-grid{ grid-template-columns:1fr; }
+  }
+
+  .steps{
+    display:flex;
+    flex-direction:column;
+    gap:.25rem;
+    position:sticky;
+    top:1.5rem;
+  }
+  @media (max-width:760px){
+    .steps{ position:static; flex-direction:row; flex-wrap:wrap; }
+  }
+  .step-btn{
+    display:flex;
+    align-items:center;
+    gap:.65rem;
+    text-align:left;
+    background:none;
+    border:none;
+    border-left:2px solid var(--line);
+    padding:.6rem .75rem;
+    cursor:pointer;
+    color:var(--muted);
+    font-size:.86rem;
+    border-radius:0;
+  }
+  .step-btn .num{
+    font-family:var(--mono);
+    font-size:.78rem;
+    font-weight:700;
+    width:1.4rem; height:1.4rem;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    border:1.5px solid var(--line);
+    flex:none;
+  }
+  .step-btn[data-active="true"]{
+    color:var(--ink);
+    border-left-color:var(--mode-color, var(--accent));
+    font-weight:600;
+  }
+  .step-btn[data-active="true"] .num{
+    background:var(--mode-color, var(--accent));
+    border-color:var(--mode-color, var(--accent));
+    color:#fff;
+  }
+  .step-btn:hover{ color:var(--ink); }
+
+  .panel{ min-width:0; }
+  section.step{ display:none; }
+  section.step[data-visible="true"]{ display:block; }
+
+  .step-head{ margin-bottom:1.25rem; }
+  .step-head .kicker{
+    font-family:var(--mono);
+    font-size:.7rem;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--mode-color, var(--accent));
+    margin-bottom:.35rem;
+  }
+  .step-head h2{ font-size:1.3rem; margin-bottom:.35rem; }
+  .step-head p{ color:var(--muted); font-size:.92rem; max-width:64ch; }
+
+  /* ---------- card / surface ---------- */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+  }
+
+  /* ---------- step 1: schema ---------- */
+  .field-group{ margin-bottom:1.5rem; }
+  .field-group-title{
+    display:flex; align-items:center; gap:.6rem;
+    font-family:var(--mono);
+    font-size:.72rem;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:.6rem;
+  }
+  .field-group-title .bar{
+    width:16px; height:2px; background:var(--line); flex:none;
+  }
+  .field-group-title.core .bar{ background:var(--ink); }
+  .field-group-title.stream .bar{ background:var(--stream); }
+  .field-group-title.batch .bar{ background:var(--batch); }
+
+  .field-row{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--surface);
+    margin-bottom:.5rem;
+    overflow:hidden;
+  }
+  .field-row summary{
+    list-style:none;
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    gap:.75rem;
+    align-items:center;
+    padding:.7rem .9rem;
+    cursor:pointer;
+  }
+  .field-row summary::-webkit-details-marker{ display:none; }
+  .field-row .fname{
+    display:flex; align-items:center; gap:.6rem;
+    min-width:0;
+  }
+  .field-row .fname code{ font-size:.88rem; font-weight:600; }
+  .field-row .ftype{
+    font-family:var(--mono);
+    font-size:.74rem;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+  .badge{
+    font-family:var(--mono);
+    font-size:.66rem;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    padding:.15rem .45rem;
+    border-radius:2px;
+    border:1px solid currentColor;
+    white-space:nowrap;
+  }
+  .badge.required{ color:var(--bad); }
+  .badge.optional{ color:var(--muted); }
+  .badge.auto{ color:var(--muted); border-style:dashed; }
+  .field-row .caret{ color:var(--muted); font-size:.75rem; transition:transform .15s; }
+  .field-row[open] .caret{ transform:rotate(90deg); }
+  .field-detail{
+    padding:0 .9rem .9rem;
+    border-top:1px dashed var(--line);
+    margin-top:0;
+    padding-top:.75rem;
+    font-size:.87rem;
+  }
+  .field-detail p{ margin:0 0 .6rem; color:var(--ink); }
+  .field-detail .example{
+    background:var(--surface-2);
+    border-radius:2px;
+    padding:.5rem .65rem;
+    font-family:var(--mono);
+    font-size:.8rem;
+    overflow-x:auto;
+    white-space:pre;
+  }
+  .field-detail .example-label{
+    font-family:var(--mono); font-size:.66rem; text-transform:uppercase;
+    letter-spacing:.08em; color:var(--muted); margin-bottom:.3rem; display:block;
+  }
+
+  /* ---------- step 2: mapping ---------- */
+  .source-box{ margin-bottom:1.75rem; }
+  .source-box textarea{
+    width:100%;
+    min-height:170px;
+    font-family:var(--mono);
+    font-size:.82rem;
+    padding:.75rem;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--surface-2);
+    color:var(--ink);
+    resize:vertical;
+  }
+  .source-actions{
+    display:flex; align-items:center; gap:.75rem; margin-top:.6rem; flex-wrap:wrap;
+  }
+  .btn{
+    font-family:var(--mono);
+    font-size:.78rem;
+    font-weight:600;
+    padding:.5rem 1rem;
+    border-radius:var(--radius);
+    border:1.5px solid var(--ink);
+    background:var(--ink);
+    color:var(--bg);
+    cursor:pointer;
+    letter-spacing:.02em;
+  }
+  .btn.ghost{ background:none; color:var(--ink); }
+  .source-status{ font-size:.8rem; color:var(--muted); }
+  .source-status.err{ color:var(--bad); }
+
+  .map-table{ display:flex; flex-direction:column; gap:.5rem; }
+  .map-row{
+    display:grid;
+    grid-template-columns:1.3fr 1.4fr auto;
+    gap:.75rem 1rem;
+    align-items:start;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--surface);
+    padding:.7rem .85rem;
+  }
+  @media (max-width:640px){
+    .map-row{ grid-template-columns:1fr; }
+  }
+  .map-target code{ font-weight:600; font-size:.88rem; }
+  .map-target .ftype{ font-family:var(--mono); font-size:.72rem; color:var(--muted); display:block; margin-top:.15rem; }
+  .map-source select{
+    width:100%;
+    font-family:var(--mono);
+    font-size:.8rem;
+    padding:.4rem .5rem;
+    border:1px solid var(--line);
+    border-radius:2px;
+    background:var(--surface-2);
+    color:var(--ink);
+  }
+  .map-source .assigned-note{
+    font-size:.78rem; color:var(--muted); font-style:italic;
+  }
+  .map-status{ justify-self:end; text-align:right; }
+  @media (max-width:640px){ .map-status{ justify-self:start; text-align:left; } }
+  .status-pill{
+    display:inline-flex; align-items:center; gap:.4rem;
+    font-family:var(--mono); font-size:.7rem; letter-spacing:.03em;
+    padding:.25rem .55rem; border-radius:2px; white-space:nowrap;
+  }
+  .status-pill .dot{ width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .status-pill.ok{ background:var(--good-bg); color:var(--good); }
+  .status-pill.warn{ background:var(--warn-bg); color:var(--warn); }
+  .status-pill.bad{ background:var(--bad-bg); color:var(--bad); }
+  .status-pill.auto{ background:var(--surface-2); color:var(--muted); }
+  .map-note{
+    grid-column:1/-1;
+    font-size:.8rem;
+    color:var(--warn);
+    background:var(--warn-bg);
+    border-radius:2px;
+    padding:.4rem .6rem;
+    margin-top:-.15rem;
+  }
+  .map-note.bad-note{ color:var(--bad); background:var(--bad-bg); }
+
+  /* ---------- step 3: preview ---------- */
+  .preview-grid{
+    display:grid;
+    grid-template-columns:1.1fr .9fr;
+    gap:1.5rem;
+    align-items:start;
+  }
+  @media (max-width:820px){ .preview-grid{ grid-template-columns:1fr; } }
+
+  .banner{
+    border-radius:var(--radius);
+    padding:.75rem .9rem;
+    font-size:.88rem;
+    margin-bottom:1rem;
+    border:1px solid;
+    display:flex; align-items:center; gap:.6rem;
+  }
+  .banner.good{ background:var(--good-bg); color:var(--good); border-color:var(--good); }
+  .banner.warn{ background:var(--warn-bg); color:var(--warn); border-color:var(--warn); }
+  .banner.bad{ background:var(--bad-bg); color:var(--bad); border-color:var(--bad); }
+
+  .code-panel{
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:.9rem;
+    overflow-x:auto;
+    font-family:var(--mono);
+    font-size:.8rem;
+  }
+  .pv-row{ white-space:pre; }
+  .pv-key{ color:var(--ink); }
+  .pv-punct{ color:var(--muted); }
+  .pv-val{ color:var(--stream); }
+  .app.mode-batch .pv-val{ color:var(--batch); }
+  .pv-note{ color:var(--muted); font-style:italic; }
+  .pv-row.bad .pv-note{ color:var(--bad); }
+  .pv-row.warn .pv-note{ color:var(--warn); }
+
+  .check-list{ display:flex; flex-direction:column; gap:.4rem; }
+  .check-item{
+    display:flex; align-items:center; gap:.6rem;
+    font-size:.85rem;
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:.45rem .6rem;
+    background:var(--surface);
+  }
+  .check-item code{ font-size:.8rem; }
+  .check-item .spacer{ flex:1; }
+
+  /* ---------- step 4: flow ---------- */
+  .flow-trunk{
+    display:flex; align-items:stretch; gap:0; flex-wrap:wrap;
+    margin-bottom:0;
+  }
+  .flow-node{
+    border:1.5px solid var(--mode-color, var(--ink));
+    border-radius:var(--radius);
+    background:var(--surface);
+    padding:.75rem .9rem;
+    font-size:.82rem;
+    min-width:150px;
+    flex:1 1 150px;
+  }
+  .flow-node .fk{
+    font-family:var(--mono); font-size:.65rem; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--muted); display:block; margin-bottom:.25rem;
+  }
+  .flow-arrow{
+    display:flex; align-items:center; justify-content:center;
+    padding:0 .5rem;
+    color:var(--mode-color, var(--accent));
+    font-family:var(--mono);
+    flex:0 0 auto;
+  }
+  .flow-fanout-wrap{ position:relative; margin-top:2.1rem; }
+  .flow-trunk-stub{
+    position:absolute; top:-1.35rem; left:calc(100% - 150px - 0.9rem);
+    width:2px; height:1.35rem; background:var(--mode-color, var(--accent));
+  }
+  .flow-fanout{
+    display:flex; gap:1rem; flex-wrap:wrap;
+    border-top:2px solid var(--mode-color, var(--accent));
+    padding-top:1.35rem;
+  }
+  .flow-consumer{
+    position:relative;
+    flex:1 1 180px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--surface);
+    padding:.7rem .85rem;
+    font-size:.82rem;
+  }
+  .flow-consumer::before{
+    content:'';
+    position:absolute; top:-1.35rem; left:50%;
+    width:2px; height:1.35rem; background:var(--mode-color, var(--accent));
+  }
+  .flow-consumer .fk{
+    font-family:var(--mono); font-size:.65rem; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--muted); display:block; margin-bottom:.25rem;
+  }
+  .flow-legend{
+    display:flex; gap:1.25rem; margin-top:1.75rem; font-size:.78rem; color:var(--muted); flex-wrap:wrap;
+  }
+  .flow-legend span{ display:inline-flex; align-items:center; gap:.4rem; }
+  .flow-legend .sw{ width:10px; height:10px; border-radius:2px; }
+
+  .callout{
+    margin-top:1.5rem;
+    border-left:3px solid var(--mode-color, var(--accent));
+    background:var(--surface-2);
+    border-radius:0 var(--radius) var(--radius) 0;
+    padding:.85rem 1rem;
+    font-size:.87rem;
+  }
+  .callout b{ display:block; margin-bottom:.25rem; font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; color:var(--mode-color, var(--accent)); font-family:var(--mono); }
+
+  .step-nav{
+    display:flex; justify-content:space-between; margin-top:2rem; padding-top:1.25rem; border-top:1px solid var(--line);
+  }
+</style>
+
+<div class="app mode-stream" id="app">
+  <div class="topbar">
+    <div class="brandblock">
+      <div class="brandmark">⇄</div>
+      <div class="titles">
+        <p class="eyebrow">Schema onboarding walkthrough</p>
+        <h1>commerce.order_event <span class="version">v3</span></h1>
+        <p class="sub">Map your source data onto the shared order-event schema used by both the real-time stream and the nightly batch load.</p>
+      </div>
+    </div>
+    <div class="mode-toggle" role="tablist" aria-label="Delivery mode">
+      <button type="button" data-mode="stream" data-active="true" role="tab" aria-selected="true"><span class="dot"></span>Stream</button>
+      <button type="button" data-mode="batch" data-active="false" role="tab" aria-selected="false"><span class="dot"></span>Batch</button>
+    </div>
+  </div>
+
+  <div class="body-grid">
+    <nav class="steps" aria-label="Walkthrough steps">
+      <button class="step-btn" data-step="1" data-active="true"><span class="num">1</span> Understand the schema</button>
+      <button class="step-btn" data-step="2" data-active="false"><span class="num">2</span> Map your fields</button>
+      <button class="step-btn" data-step="3" data-active="false"><span class="num">3</span> Validate &amp; preview</button>
+      <button class="step-btn" data-step="4" data-active="false"><span class="num">4</span> Trace the data flow</button>
+    </nav>
+
+    <main class="panel">
+
+      <!-- STEP 1 -->
+      <section class="step" id="step-1" data-visible="true">
+        <div class="step-head">
+          <p class="kicker" id="s1-kicker">Stream mode</p>
+          <h2>What's in commerce.order_event</h2>
+          <p>Every field below is part of the same logical event. Core fields apply everywhere; a few are specific to how the record is delivered. Click a field for producer notes and a real example.</p>
+        </div>
+        <div id="field-groups"></div>
+      </section>
+
+      <!-- STEP 2 -->
+      <section class="step" id="step-2" data-visible="false">
+        <div class="step-head">
+          <p class="kicker">Mapping exercise</p>
+          <h2>Map your source data</h2>
+          <p>Paste a sample record from your own system, or edit the example below (a legacy checkout export is prefilled). We'll suggest a mapping for each schema field — you confirm or correct it.</p>
+        </div>
+
+        <div class="source-box card" style="padding:.9rem;">
+          <span class="example-label">Your sample source record (JSON)</span>
+          <textarea id="source-input" spellcheck="false"></textarea>
+          <div class="source-actions">
+            <button class="btn" id="analyze-btn">Analyze &amp; suggest mapping</button>
+            <button class="btn ghost" id="reset-btn">Reset example</button>
+            <span class="source-status" id="source-status"></span>
+          </div>
+        </div>
+
+        <div class="map-table" id="map-table"></div>
+      </section>
+
+      <!-- STEP 3 -->
+      <section class="step" id="step-3" data-visible="false">
+        <div class="step-head">
+          <p class="kicker">Before you publish</p>
+          <h2>Validate &amp; preview the mapped record</h2>
+          <p>This reflects your mapping from step 2. Fields in amber still need a transform before load; fields in red still need a source.</p>
+        </div>
+
+        <div id="banner-slot"></div>
+
+        <div class="preview-grid">
+          <div>
+            <span class="example-label">Mapped output</span>
+            <div class="code-panel" id="preview-json"></div>
+          </div>
+          <div>
+            <span class="example-label">Required-field checklist</span>
+            <div class="check-list" id="check-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 4 -->
+      <section class="step" id="step-4" data-visible="false">
+        <div class="step-head">
+          <p class="kicker" id="s4-kicker">Stream mode</p>
+          <h2 id="s4-title">Where this record goes next</h2>
+          <p id="s4-desc"></p>
+        </div>
+
+        <div id="flow-diagram"></div>
+
+        <div class="flow-legend">
+          <span><span class="sw" style="background:var(--stream)"></span> Stream path (Kafka)</span>
+          <span><span class="sw" style="background:var(--batch)"></span> Batch path (warehouse)</span>
+        </div>
+
+        <div class="callout" id="flow-callout"></div>
+      </section>
+
+      <div class="step-nav">
+        <button class="btn ghost" id="prev-btn">← Back</button>
+        <button class="btn" id="next-btn">Continue →</button>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var FIELDS = [
+    { key:'event_id', type:'string (uuid)', required:true, scope:'core',
+      desc:'Unique identifier for this event record. Generate a fresh UUID per emitted event — never reuse one across retries, or downstream de-duplication will silently drop a real update.',
+      example:'"8fbb3c1e-2b34-4a51-9c3d-11f2a9e7d001"', synonyms:['event_id','evt_id','uuid'] },
+    { key:'order_id', type:'string', required:true, scope:'core',
+      desc:'The order this event describes. Stable across every event in the order\'s lifecycle, from creation through refund.',
+      example:'"ORD-2026-004821"', synonyms:['order_id','ord_id','orderid','order_number','order_no'] },
+    { key:'customer_id', type:'string', required:true, scope:'core',
+      desc:'Platform identifier for the customer who placed the order. If your source system only has an email or legacy account number, that needs to be resolved through the customer identity service before this field is populated.',
+      example:'"CUST-88213"', synonyms:['customer_id','cust_id','customerid'] },
+    { key:'status', type:'enum', enumVals:['pending','confirmed','shipped','delivered','cancelled','refunded'], required:true, scope:'core',
+      desc:'Current lifecycle state of the order. The schema is case-sensitive — values must match one of the six listed states exactly, in lowercase.',
+      example:'"confirmed"', synonyms:['status','order_status','state'] },
+    { key:'total_amount', type:'decimal(10,2)', required:true, scope:'core',
+      desc:'Order total in the stated currency, as a fixed-point number — not a formatted string with a currency symbol or thousands separator.',
+      example:'128.50', synonyms:['total_amount','amt_total','total','amount','grand_total'] },
+    { key:'currency', type:'string (ISO 4217)', required:true, scope:'core',
+      desc:'Three-letter currency code, uppercase.',
+      example:'"USD"', synonyms:['currency','curr_code','curr','ccy'] },
+    { key:'line_items', type:'array<object>', required:true, scope:'core',
+      desc:'One entry per SKU purchased: { sku, quantity, unit_price }. If your source uses different key names inside each item, they need remapping too — the schema checks nested keys.',
+      example:'[{ "sku": "SKU-4471", "quantity": 2, "unit_price": 42.00 }]', synonyms:['line_items','items','products','order_items'] },
+    { key:'placed_at', type:'timestamp (ISO 8601 UTC)', required:true, scope:'core',
+      desc:'When the order was placed, in UTC.',
+      example:'"2026-07-01T14:32:07Z"', synonyms:['placed_at','created_ts','created_at','order_date'] },
+    { key:'updated_at', type:'timestamp (ISO 8601 UTC)', required:false, scope:'core',
+      desc:'Last time the order record changed. Omit entirely on the initial "order_created" event.',
+      example:'"2026-07-02T09:10:00Z"', synonyms:['updated_at','modified_ts','updated'] },
+    { key:'source_system', type:'string', required:true, scope:'core',
+      desc:'Short code for the system that originated the order — used to route ownership when investigating a bad record.',
+      example:'"web-checkout"', synonyms:['source_system','channel','source','origin'] },
+    { key:'metadata', type:'object', required:false, scope:'core',
+      desc:'Free-form key/value bag for attributes that haven\'t earned a first-class field yet — promo codes, experiment flags, referral tags.',
+      example:'{ "campaign": "summer-sale" }', synonyms:['metadata','meta','extra'] },
+    { key:'partition_key', type:'string', required:true, scope:'stream',
+      desc:'Kafka routing key. Use customer_id so every event for one customer lands on the same partition and stays in order.',
+      example:'"CUST-88213"', synonyms:['partition_key','routing_key'] },
+    { key:'event_offset', type:'integer', required:false, scope:'stream', assigned:'pipeline',
+      desc:'Assigned by the Kafka broker on write. Producers never set this themselves.',
+      example:'482910', synonyms:[] },
+    { key:'partition_date', type:'date (YYYY-MM-DD)', required:true, scope:'batch', assigned:'pipeline',
+      desc:'The load partition this row belongs to — the extract date, not the order date. Set by the nightly job, not the source system.',
+      example:'"2026-07-01"', synonyms:['partition_date','batch_date','load_date'] },
+    { key:'batch_id', type:'string', required:true, scope:'batch', assigned:'pipeline',
+      desc:'Identifier of the nightly job run that produced this row. Used for backfills and reconciliation. Set by the loader, not the source system.',
+      example:'"orders_nightly_20260701_v1"', synonyms:['batch_id','job_id','run_id'] }
+  ];
+
+  var DEFAULT_SOURCE = {
+    ord_id: "A-99213-X",
+    cust_email: "jordan.reyes@example.com",
+    order_status: "Shipped",
+    amt_total: "128.50",
+    curr_code: "usd",
+    items: [
+      { item_sku: "SKU-4471", qty: 2, price: 42.00 },
+      { item_sku: "SKU-1182", qty: 1, price: 44.50 }
+    ],
+    created_ts: "07/01/2026 14:32:07",
+    modified_ts: "07/02/2026 09:10:00",
+    channel: "web-checkout",
+    promo_code: "SUMMER25"
+  };
+
+  var state = {
+    mode: 'stream',
+    step: 1,
+    sourceObj: null,
+    sourceKeys: [],
+    mapping: {}
+  };
+
+  function norm(s){ return String(s).toLowerCase().replace(/[^a-z0-9]/g,''); }
+
+  function esc(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function inScopeFields(mode){
+    return FIELDS.filter(function(f){ return f.scope === 'core' || f.scope === mode; });
+  }
+
+  function suggestMapping(){
+    var mapping = {};
+    FIELDS.forEach(function(f){
+      if (f.assigned === 'pipeline'){ mapping[f.key] = null; return; }
+      var best = null, bestScore = 0;
+      state.sourceKeys.forEach(function(sk){
+        var nsk = norm(sk);
+        (f.synonyms||[]).forEach(function(syn){
+          var nsyn = norm(syn);
+          var score = 0;
+          if (nsk === nsyn) score = 2;
+          else if (nsyn.length >= 4 && (nsk.indexOf(nsyn) !== -1 || nsyn.indexOf(nsk) !== -1)) score = 1;
+          if (score > bestScore){ bestScore = score; best = sk; }
+        });
+      });
+      mapping[f.key] = best;
+    });
+    return mapping;
+  }
+
+  function parseSource(){
+    var raw = document.getElementById('source-input').value;
+    var statusEl = document.getElementById('source-status');
+    try {
+      var obj = JSON.parse(raw);
+      if (Array.isArray(obj)) obj = obj[0];
+      state.sourceObj = obj;
+      state.sourceKeys = Object.keys(obj);
+      state.mapping = suggestMapping();
+      statusEl.textContent = 'Detected ' + state.sourceKeys.length + ' source fields — suggestions applied below.';
+      statusEl.className = 'source-status';
+    } catch(e){
+      statusEl.textContent = 'Could not parse that as JSON: ' + e.message;
+      statusEl.className = 'source-status err';
+      return;
+    }
+    renderMapTable();
+    renderPreview();
+  }
+
+  function coerce(field, raw){
+    if (field.type === 'enum'){
+      return typeof raw === 'string' ? raw.toLowerCase() : raw;
+    }
+    if (field.type.indexOf('decimal') === 0 || field.type === 'integer'){
+      return typeof raw === 'string' ? parseFloat(raw) : raw;
+    }
+    if (field.type.indexOf('timestamp') === 0){
+      if (typeof raw === 'string'){
+        var m = raw.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})$/);
+        if (m){
+          var d = new Date(Date.UTC(+m[3], +m[1]-1, +m[2], +m[4], +m[5], +m[6]));
+          return d.toISOString().replace(/\.000Z$/, 'Z');
+        }
+        if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) return raw;
+      }
+      return raw;
+    }
+    if (field.type.indexOf('ISO 4217') !== -1){
+      return typeof raw === 'string' ? raw.toUpperCase() : raw;
+    }
+    if (field.key === 'line_items' && Array.isArray(raw)){
+      var subMap = { sku:['sku','item_sku'], quantity:['quantity','qty'], unit_price:['unit_price','price'] };
+      return raw.map(function(item){
+        var out = {};
+        Object.keys(subMap).forEach(function(target){
+          var srcKey = Object.keys(item).find(function(k){ return subMap[target].indexOf(k) !== -1; });
+          out[target] = srcKey ? item[srcKey] : null;
+        });
+        return out;
+      });
+    }
+    if (field.key === 'metadata'){
+      var mk = state.mapping.metadata;
+      if (mk === 'promo_code') return { campaign: raw };
+      var o = {}; o[mk] = raw; return o;
+    }
+    return raw;
+  }
+
+  function noteFor(field, sourceKey, rawValue){
+    if (field.assigned === 'pipeline') return { text:'Assigned automatically — nothing to map from your source.', bad:false };
+    if (!sourceKey) return null;
+    var notes = [];
+    if (field.key === 'customer_id' && /email/i.test(sourceKey)){
+      notes.push('Not a direct identifier — resolve to a platform customer_id via lookup before load.');
+    }
+    if (field.type === 'enum' && typeof rawValue === 'string'){
+      if (field.enumVals.indexOf(rawValue.toLowerCase()) !== -1 && rawValue !== rawValue.toLowerCase()){
+        notes.push('Normalize casing — the enum is lowercase and case-sensitive.');
+      } else if (field.enumVals.indexOf(rawValue.toLowerCase()) === -1){
+        notes.push('Value doesn\'t match any allowed enum member — double-check this mapping.');
+      }
+    }
+    if ((field.type.indexOf('decimal') === 0 || field.type === 'integer') && typeof rawValue === 'string'){
+      notes.push('Cast string to a numeric type before load.');
+    }
+    if (field.type.indexOf('timestamp') === 0 && typeof rawValue === 'string' && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(rawValue)){
+      notes.push('Convert to ISO 8601 UTC, e.g. 2026-07-01T14:32:07Z.');
+    }
+    if (field.type.indexOf('ISO 4217') !== -1 && typeof rawValue === 'string' && rawValue !== rawValue.toUpperCase()){
+      notes.push('Normalize to an uppercase currency code.');
+    }
+    if (field.key === 'line_items'){
+      notes.push('Nested item keys must match too — check sku / quantity / unit_price inside each array element.');
+    }
+    if (field.key === 'metadata' && sourceKey !== 'metadata'){
+      notes.push('Wrap this as a key inside the metadata object rather than a top-level field.');
+    }
+    return notes.length ? { text: notes.join(' '), bad:false } : null;
+  }
+
+  function fieldStatus(field){
+    if (field.assigned === 'pipeline') return 'auto';
+    var sk = state.mapping[field.key];
+    if (!sk){ return field.required ? 'bad' : 'unmapped-optional'; }
+    var note = noteFor(field, sk, state.sourceObj[sk]);
+    return note ? 'warn' : 'ok';
+  }
+
+  // ---------- STEP 1 ----------
+  function renderStep1(){
+    document.getElementById('s1-kicker').textContent = state.mode === 'stream' ? 'Stream mode' : 'Batch mode';
+    var groups = [
+      { id:'core', label:'Core fields — used in every event', cls:'core' },
+      { id:'stream', label:'Stream-only fields (Kafka delivery)', cls:'stream' },
+      { id:'batch', label:'Batch-only fields (warehouse load)', cls:'batch' }
+    ];
+    var html = '';
+    groups.forEach(function(g){
+      var fields = FIELDS.filter(function(f){ return f.scope === g.id; });
+      if (!fields.length) return;
+      var dim = (g.id !== 'core' && g.id !== state.mode);
+      html += '<div class="field-group" style="' + (dim ? 'opacity:.45;' : '') + '">';
+      html += '<div class="field-group-title ' + g.cls + '"><span class="bar"></span>' + g.label + (dim ? ' — not used in ' + state.mode + ' mode' : '') + '</div>';
+      fields.forEach(function(f){
+        html += '<details class="field-row"><summary>';
+        html += '<span class="fname"><code>' + esc(f.key) + '</code><span class="ftype">' + esc(f.type) + '</span></span>';
+        html += '<span>' + (f.assigned === 'pipeline' ? '<span class="badge auto">auto-assigned</span>' : '<span class="badge ' + (f.required ? 'required' : 'optional') + '">' + (f.required ? 'required' : 'optional') + '</span>') + '</span>';
+        html += '<span class="caret">▸</span>';
+        html += '</summary>';
+        html += '<div class="field-detail"><p>' + esc(f.desc) + '</p>';
+        html += '<span class="example-label">Example value</span><div class="example">' + esc(f.example) + '</div></div>';
+        html += '</details>';
+      });
+      html += '</div>';
+    });
+    document.getElementById('field-groups').innerHTML = html;
+  }
+
+  // ---------- STEP 2 ----------
+  function renderMapTable(){
+    var wrap = document.getElementById('map-table');
+    if (!state.sourceObj){ wrap.innerHTML = ''; return; }
+    var fields = inScopeFields(state.mode);
+    var html = '';
+    fields.forEach(function(f){
+      var status = fieldStatus(f);
+      var statusLabel = { ok:'mapped', warn:'needs transform', bad:'missing', auto:'auto-assigned', 'unmapped-optional':'not provided' }[status];
+      html += '<div class="map-row">';
+      html += '<div class="map-target"><code>' + esc(f.key) + '</code><span class="ftype">' + esc(f.type) + (f.required ? ' · required' : ' · optional') + '</span></div>';
+
+      if (f.assigned === 'pipeline'){
+        html += '<div class="map-source"><span class="assigned-note">Assigned by the ' + (state.mode === 'stream' ? 'broker' : 'batch loader') + ' at write time — no source mapping needed.</span></div>';
+      } else {
+        html += '<div class="map-source"><select data-field="' + esc(f.key) + '">';
+        html += '<option value="">— unmapped —</option>';
+        state.sourceKeys.forEach(function(sk){
+          var sel = state.mapping[f.key] === sk ? ' selected' : '';
+          var preview = JSON.stringify(state.sourceObj[sk]);
+          if (preview && preview.length > 28) preview = preview.slice(0,25) + '…';
+          html += '<option value="' + esc(sk) + '"' + sel + '>' + esc(sk) + '  (' + esc(preview) + ')</option>';
+        });
+        html += '</select></div>';
+      }
+
+      html += '<div class="map-status"><span class="status-pill ' + (status === 'unmapped-optional' ? 'auto' : status) + '"><span class="dot"></span>' + statusLabel + '</span></div>';
+
+      if (f.assigned !== 'pipeline' && state.mapping[f.key]){
+        var note = noteFor(f, state.mapping[f.key], state.sourceObj[state.mapping[f.key]]);
+        if (note) html += '<div class="map-note">' + esc(note.text) + '</div>';
+      }
+      html += '</div>';
+    });
+    wrap.innerHTML = html;
+
+    wrap.querySelectorAll('select[data-field]').forEach(function(sel){
+      sel.addEventListener('change', function(){
+        state.mapping[sel.getAttribute('data-field')] = sel.value || null;
+        renderMapTable();
+        renderPreview();
+      });
+    });
+  }
+
+  // ---------- STEP 3 ----------
+  function renderPreview(){
+    var fields = inScopeFields(state.mode);
+    if (!state.sourceObj){
+      document.getElementById('preview-json').innerHTML = '<span class="pv-note">Analyze a source record in step 2 first.</span>';
+      document.getElementById('check-list').innerHTML = '';
+      document.getElementById('banner-slot').innerHTML = '';
+      return;
+    }
+    var rows = [];
+    var missingRequired = 0, warnCount = 0;
+
+    fields.forEach(function(f){
+      var status = fieldStatus(f);
+      if (f.required && status === 'bad') missingRequired++;
+      if (status === 'warn') warnCount++;
+
+      var valHtml, rowCls = '';
+      if (f.assigned === 'pipeline'){
+        valHtml = '<span class="pv-note">‹ assigned at load time ›</span>';
+      } else if (!state.mapping[f.key]){
+        valHtml = '<span class="pv-punct">null</span> <span class="pv-note">// ' + (f.required ? 'required, not mapped' : 'optional, not provided') + '</span>';
+        rowCls = f.required ? 'bad' : '';
+      } else {
+        var sk = state.mapping[f.key];
+        var raw = state.sourceObj[sk];
+        if (f.key === 'customer_id' && /email/i.test(sk)){
+          valHtml = '<span class="pv-note">‹ resolve via lookup: ' + esc(raw) + ' ›</span>';
+          rowCls = 'warn';
+        } else {
+          var transformed = coerce(f, raw);
+          valHtml = '<span class="pv-val">' + esc(JSON.stringify(transformed)) + '</span>';
+          var note = noteFor(f, sk, raw);
+          if (note){ valHtml += ' <span class="pv-note">// ' + esc(note.text) + '</span>'; rowCls = 'warn'; }
+        }
+      }
+      rows.push('<div class="pv-row ' + rowCls + '"><span class="pv-key">"' + esc(f.key) + '"</span><span class="pv-punct">: </span>' + valHtml + '</div>');
+    });
+
+    document.getElementById('preview-json').innerHTML =
+      '<div class="pv-row"><span class="pv-punct">{</span></div>' + rows.join('') + '<div class="pv-row"><span class="pv-punct">}</span></div>';
+
+    var banner;
+    if (missingRequired > 0){
+      banner = '<div class="banner bad">' + missingRequired + ' required field' + (missingRequired > 1 ? 's' : '') + ' still need' + (missingRequired > 1 ? '' : 's') + ' a source mapping before this can be published.</div>';
+    } else if (warnCount > 0){
+      banner = '<div class="banner warn">All required fields are mapped — ' + warnCount + ' need a small transform before load.</div>';
+    } else {
+      banner = '<div class="banner good">This record is fully mapped and ready to publish.</div>';
+    }
+    document.getElementById('banner-slot').innerHTML = banner;
+
+    var checkHtml = '';
+    fields.filter(function(f){ return f.required; }).forEach(function(f){
+      var status = fieldStatus(f);
+      var label = { ok:'ready', warn:'needs transform', bad:'missing', auto:'auto-assigned' }[status];
+      checkHtml += '<div class="check-item"><code>' + esc(f.key) + '</code><span class="spacer"></span><span class="status-pill ' + status + '"><span class="dot"></span>' + label + '</span></div>';
+    });
+    document.getElementById('check-list').innerHTML = checkHtml;
+  }
+
+  // ---------- STEP 4 ----------
+  var FLOWS = {
+    stream: {
+      title: 'Where this record goes next — stream',
+      desc: 'Once a producer emits the event, it is validated against this schema at the broker boundary before anything downstream ever sees it.',
+      trunk: [
+        { k:'producer', v:'Checkout Service' },
+        { k:'topic', v:'Kafka: commerce.order_event.v3' },
+        { k:'validation', v:'Schema Registry check' }
+      ],
+      fanout: [
+        { k:'consumer', v:'Real-time fraud scoring' },
+        { k:'consumer', v:'Live ops dashboard' },
+        { k:'consumer', v:'Inventory reservation' },
+        { k:'consumer', v:'Customer notifications' }
+      ],
+      callout: 'A malformed event is rejected at the Schema Registry and never reaches these four consumers — so mapping mistakes surface immediately, not three hops downstream.'
+    },
+    batch: {
+      title: 'Where this record goes next — batch',
+      desc: 'The nightly job extracts a full snapshot, validates it, and lands it in the warehouse before any reporting or model training runs.',
+      trunk: [
+        { k:'source', v:'Checkout DB (nightly extract)' },
+        { k:'etl', v:'ETL job: orders_nightly' },
+        { k:'validation', v:'Batch schema validation' },
+        { k:'table', v:'analytics.orders_fct' }
+      ],
+      fanout: [
+        { k:'consumer', v:'BI reporting (Looker)' },
+        { k:'consumer', v:'LTV model training' },
+        { k:'consumer', v:'Finance reconciliation' },
+        { k:'consumer', v:'Partner data export' }
+      ],
+      callout: 'A failed batch validation holds the whole partition — none of these four consumers see yesterday\'s orders until the mapping is fixed and the job re-runs.'
+    }
+  };
+
+  function renderStep4(){
+    var f = FLOWS[state.mode];
+    document.getElementById('s4-kicker').textContent = state.mode === 'stream' ? 'Stream mode' : 'Batch mode';
+    document.getElementById('s4-title').textContent = f.title;
+    document.getElementById('s4-desc').textContent = f.desc;
+    document.getElementById('flow-callout').innerHTML = '<b>Why validation happens here</b>' + f.callout;
+
+    var html = '<div class="flow-trunk">';
+    f.trunk.forEach(function(node, i){
+      html += '<div class="flow-node"><span class="fk">' + node.k + '</span>' + node.v + '</div>';
+      if (i < f.trunk.length - 1) html += '<div class="flow-arrow">→</div>';
+    });
+    html += '</div>';
+    html += '<div class="flow-fanout-wrap"><div class="flow-trunk-stub"></div><div class="flow-fanout">';
+    f.fanout.forEach(function(node){
+      html += '<div class="flow-consumer"><span class="fk">' + node.k + '</span>' + node.v + '</div>';
+    });
+    html += '</div></div>';
+    document.getElementById('flow-diagram').innerHTML = html;
+  }
+
+  // ---------- wiring ----------
+  function renderAll(){
+    renderStep1();
+    renderMapTable();
+    renderPreview();
+    renderStep4();
+  }
+
+  function setStep(n){
+    state.step = n;
+    document.querySelectorAll('.step').forEach(function(s){ s.setAttribute('data-visible', 'false'); });
+    document.getElementById('step-' + n).setAttribute('data-visible', 'true');
+    document.querySelectorAll('.step-btn').forEach(function(b){
+      b.setAttribute('data-active', b.getAttribute('data-step') === String(n) ? 'true' : 'false');
+    });
+    document.getElementById('prev-btn').style.visibility = n === 1 ? 'hidden' : 'visible';
+    document.getElementById('next-btn').textContent = n === 4 ? 'Start over →' : 'Continue →';
+  }
+
+  document.querySelectorAll('.step-btn').forEach(function(b){
+    b.addEventListener('click', function(){ setStep(parseInt(b.getAttribute('data-step'), 10)); });
+  });
+  document.getElementById('prev-btn').addEventListener('click', function(){ if (state.step > 1) setStep(state.step - 1); });
+  document.getElementById('next-btn').addEventListener('click', function(){ setStep(state.step === 4 ? 1 : state.step + 1); });
+
+  document.querySelectorAll('.mode-toggle button').forEach(function(b){
+    b.addEventListener('click', function(){
+      state.mode = b.getAttribute('data-mode');
+      document.querySelectorAll('.mode-toggle button').forEach(function(x){
+        x.setAttribute('data-active', x === b ? 'true' : 'false');
+        x.setAttribute('aria-selected', x === b ? 'true' : 'false');
+      });
+      document.getElementById('app').className = 'app mode-' + state.mode;
+      renderAll();
+    });
+  });
+
+  document.getElementById('analyze-btn').addEventListener('click', parseSource);
+  document.getElementById('reset-btn').addEventListener('click', function(){
+    document.getElementById('source-input').value = JSON.stringify(DEFAULT_SOURCE, null, 2);
+    parseSource();
+  });
+
+  document.getElementById('source-input').value = JSON.stringify(DEFAULT_SOURCE, null, 2);
+  parseSource();
+  renderAll();
+})();
+</script>

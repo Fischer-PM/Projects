@@ -11,6 +11,7 @@ A suite of local-first AI tools built for PM research, interview prep, and portf
 | **ADR Advisor** | `adr_advisor/` | Architecture Decision Records in retrospective style — Mermaid diagrams, honest consequences |
 | **Portfolio Search** | `portfolio_search/` | BM25-powered CLI search across portfolio markdown files. No AI backend required |
 | **PM Digest Generator** | `digest_agent/` | Structured PM briefings across up to 6 topics with cross-cutting themes |
+| **Data Mapping Prototype** | `data_mapping_prototype/` | Static HTML walkthrough for mapping source data onto a stream/batch schema, with field-by-field guidance and a data-flow trace |
 
 See [TOOLS.md](TOOLS.md) for setup instructions and full documentation.
 

@@ -78,6 +78,26 @@ streamlit run app.py
 
 ---
 
+### 6. Data Mapping Prototype
+**`data_mapping_prototype/`**
+
+A self-contained HTML walkthrough that helps someone onboard a source dataset onto a shared schema (`commerce.order_event`, used by both a real-time Kafka stream and a nightly batch load). No backend or install — a single static page.
+
+**Walkthrough steps:**
+1. **Understand the schema** — every field, its type, required/optional status, and a real example, grouped into core / stream-only / batch-only
+2. **Map your fields** — paste a sample source record (a legacy checkout export is prefilled); each schema field gets an auto-suggested source mapping you confirm or correct, with transform notes (casing, date format, type casts, derived fields)
+3. **Validate & preview** — the mapped output record plus a required-field checklist, flagging what's missing vs. what just needs a transform
+4. **Trace the data flow** — where the record goes after ingestion, with separate diagrams for the stream and batch paths and their downstream consumers
+
+A Stream/Batch toggle in the header changes which fields, mappings, and flow diagram are shown throughout.
+
+```bash
+cd data_mapping_prototype
+open index.html   # or just double-click it — no server required
+```
+
+---
+
 ## Backends
 
 All Streamlit tools support two backends, selectable from the sidebar:
