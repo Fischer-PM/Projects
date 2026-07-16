@@ -78,21 +78,6 @@ streamlit run app.py
 
 ---
 
-### 6. Podcast Summarizer
-**`podcast_summarizer/`**
-
-Extracts key points, quotes, and frameworks from a podcast episode transcript and compiles a structured learning summary. Handles long transcripts (e.g. a full Lenny's Podcast episode) by splitting into segments, extracting notes per segment, then compiling one cohesive summary.
-
-**How it works:** Paste or upload a transcript (`.txt`, `.vtt`, or `.srt` — caption timestamps and cue numbers are stripped automatically). The transcript is split into word-bounded segments, each summarized independently, then compiled into one report with Executive Summary, Key Takeaways, Frameworks & Mental Models, Notable Quotes, Topics Discussed, Resources & Mentions, and Reflection Questions.
-
-```bash
-cd podcast_summarizer
-pip install -r requirements.txt
-streamlit run app.py
-```
-
----
-
 ## Backends
 
 All Streamlit tools support two backends, selectable from the sidebar:
@@ -138,7 +123,6 @@ Generated content saves as markdown files into `portfolio/`:
 | Interview Prep | `portfolio/interview-prep/` |
 | ADR Advisor | `portfolio/generated-adrs/` |
 | Digest Generator | `portfolio/digests/` |
-| Podcast Summarizer | `portfolio/podcast-summaries/` |
 | Portfolio Search | reads from `portfolio/` — no output |
 
 ---
