@@ -1,0 +1,483 @@
+<title>VOO vs. FDKLX</title>
+<style>
+  html, body { margin: 0; background: #f9f9f7; }
+  @media (prefers-color-scheme: dark) {
+    html:where(:not([data-theme="light"])) body,
+    html:where(:not([data-theme="light"])) { background: #0d0d0d; }
+  }
+  html[data-theme="dark"] body, html[data-theme="dark"] { background: #0d0d0d; }
+
+  .viz-root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page:           #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --grid:           #e1e0d9;
+    --axis:           #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --series-1:       #2a78d6; /* VOO */
+    --series-2:       #eb6834; /* FDKLX */
+    --good:           #006300;
+
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--text-primary);
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 32px 20px 48px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page:           #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --grid:           #2c2c2a;
+      --axis:           #383835;
+      --border:         rgba(255,255,255,0.10);
+      --series-1:       #3987e5;
+      --series-2:       #d95926;
+      --good:           #0ca30c;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page:           #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --grid:           #2c2c2a;
+    --axis:           #383835;
+    --border:         rgba(255,255,255,0.10);
+    --series-1:       #3987e5;
+    --series-2:       #d95926;
+    --good:           #0ca30c;
+  }
+
+  .viz-root * { box-sizing: border-box; }
+
+  .wrap { max-width: 980px; margin: 0 auto; }
+
+  h1 { font-size: 22px; font-weight: 650; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .subtitle { font-size: 14px; color: var(--text-secondary); margin: 0 0 20px; max-width: 62ch; line-height: 1.5; }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px 16px;
+    margin-bottom: 16px;
+  }
+
+  .stat-row { display: flex; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat-tile {
+    flex: 1 1 220px;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .stat-tile .label { font-size: 12.5px; color: var(--text-secondary); display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+  .swatch { width: 10px; height: 10px; border-radius: 2.5px; flex: none; }
+  .stat-tile .value { font-size: 26px; font-weight: 650; letter-spacing: -0.01em; }
+  .stat-tile .delta { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
+  .stat-tile .delta strong { color: var(--good); font-weight: 600; }
+
+  .chart-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+  .chart-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .legend { display: flex; gap: 18px; font-size: 12.5px; color: var(--text-secondary); }
+  .legend-item { display: flex; align-items: center; gap: 7px; }
+  .legend-key { width: 16px; height: 2px; border-radius: 1px; flex: none; }
+
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .gridline { stroke: var(--grid); stroke-width: 1; }
+  .axis-line { stroke: var(--axis); stroke-width: 1; }
+  .axis-label { fill: var(--text-muted); font-size: 11px; }
+  .series-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .end-dot { stroke-width: 2; }
+  .end-label-value { font-size: 13px; font-weight: 650; }
+  .end-label-name { font-size: 11px; }
+  .inception-line { stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 3 3; }
+  .inception-label { fill: var(--text-muted); font-size: 10.5px; }
+
+  .crosshair { stroke: var(--text-muted); stroke-width: 1; pointer-events: none; opacity: 0; }
+  .hover-dot { pointer-events: none; opacity: 0; stroke-width: 2; }
+
+  .tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.16);
+    opacity: 0;
+    transition: opacity 90ms ease;
+    min-width: 150px;
+    z-index: 5;
+  }
+  .tooltip .t-date { color: var(--text-secondary); font-size: 11.5px; margin-bottom: 6px; }
+  .tooltip .t-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 2px 0; }
+  .tooltip .t-key { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+  .tooltip .t-line { width: 12px; height: 2px; border-radius: 1px; flex: none; }
+  .tooltip .t-val { font-weight: 650; color: var(--text-primary); }
+  .tooltip .t-muted { color: var(--text-muted); font-style: italic; font-weight: 400; }
+
+  .chart-hitlayer { cursor: crosshair; }
+
+  .foot-note { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-top: 4px; }
+
+  .toggle-btn {
+    font: inherit;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  .toggle-btn:hover { color: var(--text-primary); border-color: var(--axis); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table caption { text-align: left; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+  th, td { text-align: right; padding: 7px 10px; font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--grid); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--text-muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.02em; }
+  td.muted { color: var(--text-muted); font-style: italic; }
+  .table-scroll { overflow-x: auto; }
+
+  #tableCard { display: none; }
+</style>
+
+<div class="viz-root">
+  <div class="wrap">
+    <h1>VOO vs. FDKLX — growth of $10,000</h1>
+    <p class="subtitle">
+      Vanguard S&amp;P 500 ETF (VOO) vs. Fidelity Freedom&reg; Index 2060 Fund (FDKLX), dividends reinvested.
+      VOO has traded since September 2010, so it covers the full 15 years; FDKLX didn't launch until
+      August 2014, so its line starts partway across the chart — that gap is real, not missing data.
+    </p>
+
+    <div class="stat-row">
+      <div class="stat-tile">
+        <div class="label"><span class="swatch" style="background:var(--series-1)"></span>VOO &middot; since Jan 2011</div>
+        <div class="value">$10,000 &rarr; $82,355</div>
+        <div class="delta">&approx;14.5%/yr &middot; <strong>+723.6%</strong> cumulative</div>
+      </div>
+      <div class="stat-tile">
+        <div class="label"><span class="swatch" style="background:var(--series-2)"></span>FDKLX &middot; since Aug 2014</div>
+        <div class="value">$10,000 &rarr; $32,646</div>
+        <div class="delta">&approx;10.0%/yr &middot; <strong>+226.5%</strong> cumulative</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="chart-head">
+        <div class="chart-title">Growth of a $10,000 investment, 2011–2026</div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-key" style="background:var(--series-1)"></span>VOO</div>
+          <div class="legend-item"><span class="legend-key" style="background:var(--series-2)"></span>FDKLX</div>
+        </div>
+      </div>
+
+      <div style="position:relative;">
+        <svg id="chart" viewBox="0 0 960 460" role="img" aria-label="Line chart comparing growth of a $10,000 investment in VOO since 2011 and FDKLX since 2014, both reaching mid-2026">
+          <g id="gridlayer"></g>
+          <g id="datalayer"></g>
+          <g id="axislayer"></g>
+          <line id="crosshair" class="crosshair" x1="0" y1="0" x2="0" y2="0"></line>
+          <circle id="hoverDot1" class="hover-dot" r="5" fill="var(--series-1)" stroke="var(--surface-1)"></circle>
+          <circle id="hoverDot2" class="hover-dot" r="5" fill="var(--series-2)" stroke="var(--surface-1)"></circle>
+          <rect id="hitlayer" class="chart-hitlayer" x="0" y="0" width="960" height="460" fill="transparent"></rect>
+        </svg>
+        <div id="tooltip" class="tooltip"></div>
+      </div>
+
+      <p class="foot-note">
+        Built from publicly reported calendar-year total returns (dividends reinvested); 2026 figures are
+        year-to-date through mid-August 2026. This environment couldn't reach live NAV/price feeds, so
+        values are annual-checkpoint approximations, not exact daily series — directionally accurate, not
+        precise enough for tax or transaction decisions. Not investment advice.
+      </p>
+    </div>
+
+    <button class="toggle-btn" id="tableToggle" aria-expanded="false" aria-controls="tableCard">Show data table</button>
+
+    <div class="card" id="tableCard">
+      <div class="table-scroll">
+        <table>
+          <caption>Year-end value of a $10,000 investment and calendar-year total return</caption>
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>VOO value</th>
+              <th>VOO return</th>
+              <th>FDKLX value</th>
+              <th>FDKLX return</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var voo = [
+    { x: 2011.00, y: 10000, label: "Jan 2011", ret: null },
+    { x: 2011.99, y: 10211, label: "2011", ret: 0.0211 },
+    { x: 2012.99, y: 11845, label: "2012", ret: 0.1600 },
+    { x: 2013.99, y: 15682, label: "2013", ret: 0.3239 },
+    { x: 2014.99, y: 17828, label: "2014", ret: 0.1369 },
+    { x: 2015.99, y: 18074, label: "2015", ret: 0.0138 },
+    { x: 2016.99, y: 20237, label: "2016", ret: 0.1196 },
+    { x: 2017.99, y: 24654, label: "2017", ret: 0.2183 },
+    { x: 2018.99, y: 23575, label: "2018", ret: -0.0438 },
+    { x: 2019.99, y: 30998, label: "2019", ret: 0.3149 },
+    { x: 2020.99, y: 36702, label: "2020", ret: 0.1840 },
+    { x: 2021.99, y: 47239, label: "2021", ret: 0.2871 },
+    { x: 2022.99, y: 38660, label: "2022", ret: -0.1817 },
+    { x: 2023.99, y: 48840, label: "2023", ret: 0.2632 },
+    { x: 2024.99, y: 61043, label: "2024", ret: 0.2498 },
+    { x: 2025.99, y: 71926, label: "2025", ret: 0.1782 },
+    { x: 2026.62, y: 82355, label: "2026 YTD (Aug 14)", ret: 0.1450 }
+  ];
+  var fdklx = [
+    { x: 2014.61, y: 10000, label: "Aug 2014 (inception)", ret: null },
+    { x: 2014.99, y: 10553, label: "2014", ret: 0.0553 },
+    { x: 2015.99, y: 10392, label: "2015", ret: -0.0153 },
+    { x: 2016.99, y: 11363, label: "2016", ret: 0.0934 },
+    { x: 2017.99, y: 13701, label: "2017", ret: 0.2058 },
+    { x: 2018.99, y: 12719, label: "2018", ret: -0.0720 },
+    { x: 2019.99, y: 16039, label: "2019", ret: 0.2610 },
+    { x: 2020.99, y: 18669, label: "2020", ret: 0.1640 },
+    { x: 2021.99, y: 21637, label: "2021", ret: 0.1588 },
+    { x: 2022.99, y: 17699, label: "2022", ret: -0.1820 },
+    { x: 2023.99, y: 21221, label: "2023", ret: 0.1991 },
+    { x: 2024.99, y: 24230, label: "2024", ret: 0.1417 },
+    { x: 2025.99, y: 29411, label: "2025", ret: 0.2138 },
+    { x: 2026.62, y: 32646, label: "2026 YTD (Aug 14)", ret: 0.1100 }
+  ];
+
+  // Merged hover checkpoints: every year-end x, in order, de-duplicated.
+  var hoverX = [];
+  voo.concat(fdklx).forEach(function (p) {
+    if (hoverX.indexOf(p.x) === -1) hoverX.push(p.x);
+  });
+  hoverX.sort(function (a, b) { return a - b; });
+
+  var pad = { l: 64, r: 108, t: 18, b: 34 };
+  var W = 960, H = 460;
+  var plotW = W - pad.l - pad.r;
+  var plotH = H - pad.t - pad.b;
+  var xMin = 2011.00, xMax = 2026.62;
+  var yMax = 85000;
+
+  function xScale(x) { return pad.l + ((x - xMin) / (xMax - xMin)) * plotW; }
+  function yScale(y) { return pad.t + plotH - (y / yMax) * plotH; }
+
+  var svgns = "http://www.w3.org/2000/svg";
+  function el(tag, attrs) {
+    var e = document.createElementNS(svgns, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  var gridlayer = document.getElementById("gridlayer");
+  var axislayer = document.getElementById("axislayer");
+  var datalayer = document.getElementById("datalayer");
+
+  // Y gridlines + labels
+  [0, 20000, 40000, 60000, 80000].forEach(function (v) {
+    var y = yScale(v);
+    gridlayer.appendChild(el("line", { class: "gridline", x1: pad.l, x2: W - pad.r, y1: y, y2: y }));
+    var t = el("text", { class: "axis-label", x: pad.l - 10, y: y + 4, "text-anchor": "end" });
+    t.textContent = "$" + (v / 1000) + "K";
+    axislayer.appendChild(t);
+  });
+
+  // X axis baseline + year ticks
+  axislayer.appendChild(el("line", { class: "axis-line", x1: pad.l, x2: W - pad.r, y1: pad.t + plotH, y2: pad.t + plotH }));
+  [2011, 2013, 2015, 2017, 2019, 2021, 2023, 2025].forEach(function (yr) {
+    var x = xScale(yr);
+    var t = el("text", { class: "axis-label", x: x, y: pad.t + plotH + 20, "text-anchor": "middle" });
+    t.textContent = yr;
+    axislayer.appendChild(t);
+  });
+
+  // FDKLX inception marker
+  var incX = xScale(2014.61);
+  datalayer.appendChild(el("line", { class: "inception-line", x1: incX, x2: incX, y1: pad.t, y2: pad.t + plotH }));
+  var incLabel = el("text", { class: "inception-label", x: incX + 6, y: pad.t + 12 });
+  incLabel.textContent = "FDKLX launches";
+  datalayer.appendChild(incLabel);
+
+  function pathFor(points) {
+    return points.map(function (p, i) {
+      return (i === 0 ? "M" : "L") + xScale(p.x).toFixed(2) + "," + yScale(p.y).toFixed(2);
+    }).join(" ");
+  }
+
+  datalayer.appendChild(el("path", { class: "series-line", d: pathFor(voo), stroke: "var(--series-1)" }));
+  datalayer.appendChild(el("path", { class: "series-line", d: pathFor(fdklx), stroke: "var(--series-2)" }));
+
+  // End dots + direct labels
+  function endLabel(points, color, name) {
+    var last = points[points.length - 1];
+    var x = xScale(last.x), y = yScale(last.y);
+    datalayer.appendChild(el("circle", { class: "end-dot", cx: x, cy: y, r: 5, fill: color, stroke: "var(--surface-1)" }));
+    var vt = el("text", { class: "end-label-value", x: x + 10, y: y - 3, fill: "var(--text-primary)" });
+    vt.textContent = "$" + Math.round(last.y).toLocaleString();
+    datalayer.appendChild(vt);
+    var nt = el("text", { class: "end-label-name", x: x + 10, y: y + 12, fill: "var(--text-secondary)" });
+    nt.textContent = name;
+    datalayer.appendChild(nt);
+  }
+  endLabel(voo, "var(--series-1)", "VOO");
+  endLabel(fdklx, "var(--series-2)", "FDKLX");
+
+  // Hover interaction
+  var svg = document.getElementById("chart");
+  var hit = document.getElementById("hitlayer");
+  var crosshair = document.getElementById("crosshair");
+  var dot1 = document.getElementById("hoverDot1");
+  var dot2 = document.getElementById("hoverDot2");
+  var tooltip = document.getElementById("tooltip");
+
+  function findByX(points, x) {
+    for (var i = 0; i < points.length; i++) {
+      if (Math.abs(points[i].x - x) < 0.02) return points[i];
+    }
+    return null;
+  }
+
+  function fmtPct(r) {
+    if (r === null) return null;
+    var s = (r * 100).toFixed(1) + "%";
+    return r >= 0 ? "+" + s : s;
+  }
+
+  function showAt(clientX, clientY, svgX) {
+    var nearest = hoverX[0], best = Infinity;
+    hoverX.forEach(function (hx) {
+      var d = Math.abs(hx - svgX);
+      if (d < best) { best = d; nearest = hx; }
+    });
+    var vPt = findByX(voo, nearest);
+    var fPt = findByX(fdklx, nearest);
+
+    var cx = xScale(nearest);
+    crosshair.setAttribute("x1", cx); crosshair.setAttribute("x2", cx);
+    crosshair.setAttribute("y1", pad.t); crosshair.setAttribute("y2", pad.t + plotH);
+    crosshair.style.opacity = 1;
+
+    if (vPt) {
+      dot1.setAttribute("cx", xScale(vPt.x)); dot1.setAttribute("cy", yScale(vPt.y));
+      dot1.style.opacity = 1;
+    } else { dot1.style.opacity = 0; }
+
+    if (fPt) {
+      dot2.setAttribute("cx", xScale(fPt.x)); dot2.setAttribute("cy", yScale(fPt.y));
+      dot2.style.opacity = 1;
+    } else { dot2.style.opacity = 0; }
+
+    var dateLabel = (vPt && vPt.label) || (fPt && fPt.label) || "";
+    var html = '<div class="t-date"></div>';
+    tooltip.innerHTML = "";
+    var dateEl = document.createElement("div");
+    dateEl.className = "t-date";
+    dateEl.textContent = dateLabel;
+    tooltip.appendChild(dateEl);
+
+    function row(color, name, pt) {
+      var r = document.createElement("div");
+      r.className = "t-row";
+      var key = document.createElement("div");
+      key.className = "t-key";
+      var line = document.createElement("span");
+      line.className = "t-line";
+      line.style.background = color;
+      var nm = document.createElement("span");
+      nm.textContent = name;
+      key.appendChild(line); key.appendChild(nm);
+      var val = document.createElement("div");
+      if (pt) {
+        val.className = "t-val";
+        var pct = fmtPct(pt.ret);
+        val.textContent = "$" + Math.round(pt.y).toLocaleString() + (pct ? " (" + pct + ")" : "");
+      } else {
+        val.className = "t-val t-muted";
+        val.textContent = "not yet launched";
+      }
+      r.appendChild(key); r.appendChild(val);
+      return r;
+    }
+    tooltip.appendChild(row("var(--series-1)", "VOO", vPt));
+    tooltip.appendChild(row("var(--series-2)", "FDKLX", fPt));
+
+    tooltip.style.opacity = 1;
+    var rect = svg.getBoundingClientRect();
+    var scaleX = rect.width / W;
+    var left = cx * scaleX + 14;
+    if (left + 180 > rect.width) left = cx * scaleX - 194;
+    tooltip.style.left = left + "px";
+    tooltip.style.top = (yScale((vPt || fPt).y) * (rect.height / H) - 46) + "px";
+  }
+
+  function hide() {
+    crosshair.style.opacity = 0;
+    dot1.style.opacity = 0;
+    dot2.style.opacity = 0;
+    tooltip.style.opacity = 0;
+  }
+
+  hit.addEventListener("pointermove", function (e) {
+    var rect = svg.getBoundingClientRect();
+    var px = (e.clientX - rect.left) * (W / rect.width);
+    var svgX = xMin + ((px - pad.l) / plotW) * (xMax - xMin);
+    if (svgX < xMin) svgX = xMin;
+    if (svgX > xMax) svgX = xMax;
+    showAt(e.clientX, e.clientY, svgX);
+  });
+  hit.addEventListener("pointerleave", hide);
+
+  // Data table
+  var tbody = document.getElementById("tableBody");
+  var years = ["2011","2012","2013","2014","2015","2016","2017","2018","2019","2020","2021","2022","2023","2024","2025","2026 YTD"];
+  years.forEach(function (yr) {
+    var v = voo.find(function (p) { return p.label === yr || p.label.indexOf(yr) === 0; });
+    var f = fdklx.find(function (p) { return p.label === yr || p.label.indexOf(yr) === 0; });
+    var tr = document.createElement("tr");
+    function td(text, muted) {
+      var c = document.createElement("td");
+      if (muted) c.className = "muted";
+      c.textContent = text;
+      return c;
+    }
+    tr.appendChild(td(yr));
+    tr.appendChild(td(v ? "$" + Math.round(v.y).toLocaleString() : "—", !v));
+    tr.appendChild(td(v && v.ret !== null ? fmtPct(v.ret) : "—", !v || v.ret === null));
+    tr.appendChild(td(f ? "$" + Math.round(f.y).toLocaleString() : "not yet launched", !f));
+    tr.appendChild(td(f && f.ret !== null ? fmtPct(f.ret) : (f ? "—" : "not yet launched"), !f || f.ret === null));
+    tbody.appendChild(tr);
+  });
+
+  var toggle = document.getElementById("tableToggle");
+  var tableCard = document.getElementById("tableCard");
+  toggle.addEventListener("click", function () {
+    var open = tableCard.style.display === "block";
+    tableCard.style.display = open ? "none" : "block";
+    toggle.textContent = open ? "Show data table" : "Hide data table";
+    toggle.setAttribute("aria-expanded", String(!open));
+  });
+})();
+</script>
